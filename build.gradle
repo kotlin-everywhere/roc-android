@@ -1,0 +1,50 @@
+buildscript {
+    ext.kotlin_version = '1.0.2'
+
+    repositories {
+        jcenter()
+        mavenCentral()
+        maven { url "https://plugins.gradle.org/m2/" }
+    }
+
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath 'com.android.tools.build:gradle:1.5.0'
+    }
+}
+
+
+apply plugin: "com.android.library"
+android {
+    defaultConfig {
+        minSdkVersion 15
+        targetSdkVersion 23
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+    compileSdkVersion 23
+    buildToolsVersion '23.0.3'
+    sourceSets {
+        main.java.srcDirs += 'src/main/kotlin'
+        androidTest.java.srcDirs += 'src/androidTest/kotlin'
+        androidTest.java.srcDirs += 'test-server/remote'
+    }
+}
+
+apply plugin: 'kotlin-android'
+
+repositories {
+    jcenter()
+    mavenCentral()
+    maven { url "https://jitpack.io" }
+}
+
+dependencies {
+    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    // http://mvnrepository.com/artifact/com.google.code.gson/gson
+    compile group: 'com.google.code.gson', name: 'gson', version: '2.6.2'
+    compile 'com.loopj.android:android-async-http:1.4.9'
+
+    // http://mvnrepository.com/artifact/junit/junit
+    androidTestCompile group: 'junit', name: 'junit', version: '4.12'
+    androidTestCompile 'com.android.support.test:runner:0.4'
+}
