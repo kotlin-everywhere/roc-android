@@ -1,17 +1,10 @@
 package com.github.kotlin_everywhere.rpc
 
+import com.github.kittinunf.fuel.httpGet
+import com.github.kittinunf.fuel.httpPost
 import com.google.gson.Gson
-import com.loopj.android.http.AsyncHttpClient
-import com.loopj.android.http.AsyncHttpResponseHandler
-import com.loopj.android.http.RequestParams
-import cz.msebera.android.httpclient.Header
-import cz.msebera.android.httpclient.entity.ByteArrayEntity
-import java.nio.charset.Charset
 
 private val defaultGson: Gson = Gson()
-
-private val utf8: Charset
-    get() = charset("UTF-8")
 
 enum class Method {
     GET, POST
@@ -59,19 +52,25 @@ class Fetch<P, R>(private val method: Method, private val responseClass: Class<R
         }
     }
 
-    operator fun invoke(parameter: P, callback: (R) -> Unit) {
-        val client = AsyncHttpClient()
-        val responseHandler = ResponseHandler(responseClass, remote.gson, callback)
+    operator fun invoke(parameter: P): R {
         val jsonParameter = if (parameter == Unit) null else remote.gson.toJson(parameter)
         val url = remote.base + url
-        when (method) {
+        val request = when (method) {
             Method.GET -> {
-                client.get(url, jsonParameter?.let { RequestParams("data", it) }, responseHandler)
+                url.httpGet(jsonParameter?.let { listOf("data" to it) })
             }
             Method.POST -> {
-                client.post(null, url, jsonParameter?.let { ByteArrayEntity(it.toByteArray(utf8)) },
-                        "application/json; charset=UTF-8", responseHandler)
+                url.httpPost()
+                        .let { r -> jsonParameter?.let { r.body(it) } ?: r }
+                        .header("Content-Type" to "application/json; charset=UTF-8")
             }
+        }
+        val result = request.responseString().third
+        return if (responseClass == Unit::class.java) {
+            @Suppress("UNCHECKED_CAST")
+            (Unit as R);
+        } else {
+            remote.gson.fromJson(result.get(), responseClass);
         }
     }
 }
@@ -82,20 +81,4 @@ inline fun <P, reified R : Any> get(url: String? = null): Fetch<P, R> {
 
 inline fun <P, reified R : Any> post(url: String? = null): Fetch<P, R> {
     return Fetch(Method.POST, R::class.java, url)
-}
-
-class ResponseHandler<R>(private val responseClass: Class<R>, private val gson: Gson, private val callback: (R) -> Unit) : AsyncHttpResponseHandler() {
-    override fun onSuccess(p0: Int, p1: Array<out Header>?, p2: ByteArray?) {
-        val result = if (responseClass == Unit::class.java) {
-            @Suppress("UNCHECKED_CAST")
-            (Unit as R)
-        } else {
-            gson.fromJson(p2!!.toString(utf8), responseClass)
-        }
-        callback(result)
-    }
-
-    override fun onFailure(p0: Int, p1: Array<out Header>?, p2: ByteArray?, p3: Throwable?) {
-        throw p3!!
-    }
 }
