@@ -25,7 +25,7 @@ private val postServer = PostServer().apply {
 
     delete { pk ->
         posts = posts
-                .filter { it.pk == pk }
+                .filter { it.pk != pk }
                 .toTypedArray()
     }
 
