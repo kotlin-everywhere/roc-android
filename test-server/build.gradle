@@ -11,6 +11,7 @@ buildscript {
 }
 
 apply plugin: "kotlin"
+//noinspection GroovyAssignabilityCheck
 sourceSets {
      main.java.srcDirs += "remote"
 }
@@ -21,5 +22,5 @@ repositories {
 }
 
 dependencies {
-    compile 'com.github.kotlin-everywhere:rpc-servlet:ea312f40c9'
+    compile 'com.github.kotlin-everywhere:rpc-servlet:2e695ab9bd'
 }
