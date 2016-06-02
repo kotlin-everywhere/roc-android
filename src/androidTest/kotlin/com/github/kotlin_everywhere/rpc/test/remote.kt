@@ -4,6 +4,7 @@ import android.test.AndroidTestCase
 import com.github.kotlin_everywhere.rpc.init
 import com.github.kotlin_everywhere.rpc.testServer.PostServer
 import org.junit.Assert.assertArrayEquals
+import java.util.concurrent.CountDownLatch
 
 private val postServer = PostServer().init("http://192.168.56.1:9999")
 
@@ -24,5 +25,17 @@ class RemoteTest : AndroidTestCase() {
         assertEquals(Unit, postServer.delete(1))
         assertArrayEquals(arrayOf(), postServer.list())
     }
+
+    fun testAsync() {
+        assertEquals(3, sync<Int> { postServer.sum(arrayOf(1, 2), it) })
+    }
+}
+
+fun <T> sync(block: ((T) -> Unit) -> Unit): T {
+    val latch = CountDownLatch(1)
+    var value: T? = null
+    block { value = it; latch.countDown() }
+    latch.await()
+    return value!!
 }
 

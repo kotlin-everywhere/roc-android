@@ -33,6 +33,14 @@ private val postServer = PostServer().apply {
         posts = arrayOf()
         pkSeq = 0
     }
+
+    sum {
+        if (it.isNotEmpty()) {
+            it.reduce { sum, i -> sum + i }
+        } else {
+            0
+        }
+    }
 }
 
 fun main(args: Array<String>) {

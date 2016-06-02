@@ -12,6 +12,8 @@ class PostServer : Remote() {
     val truncate = post<Unit>()
 
     data class Post(val pk: Int, val title: String, val content: String)
+
+    val sum = post<Array<Int>, Int>()
 }
 
 

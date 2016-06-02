@@ -1,5 +1,6 @@
 package com.github.kotlin_everywhere.rpc
 
+import com.github.kittinunf.fuel.core.Request
 import com.github.kittinunf.fuel.httpGet
 import com.github.kittinunf.fuel.httpPost
 import com.google.gson.Gson
@@ -60,7 +61,7 @@ open class Endpoint<P, R>(private val method: Method, private val responseClass:
         }
     }
 
-    protected fun call(parameter: P): R {
+    private fun buildRequest(parameter: P): Request {
         val jsonParameter = if (parameter == Unit) null else remote.gson.toJson(parameter)
         val url = remote.base + url
         val request = when (method) {
@@ -73,12 +74,25 @@ open class Endpoint<P, R>(private val method: Method, private val responseClass:
                         .header("Content-Type" to "application/json; charset=UTF-8")
             }
         }
-        val result = request.responseString().third
+        return request
+    }
+
+    protected fun fetch(parameter: P): R {
+        return buildResponse(buildRequest(parameter).responseString().third.get())
+    }
+
+    protected fun fetch(parameter: P, callback: (R) -> Unit) {
+        buildRequest(parameter).responseString { request, response, result ->
+            callback(buildResponse(result.get()))
+        }
+    }
+
+    private fun buildResponse(response: String): R {
         return if (responseClass == Unit::class.java) {
             @Suppress("UNCHECKED_CAST")
             (Unit as R);
         } else {
-            remote.gson.fromJson(result.get(), responseClass);
+            remote.gson.fromJson(response, responseClass);
         }
     }
 
@@ -86,13 +100,21 @@ open class Endpoint<P, R>(private val method: Method, private val responseClass:
 
 class Function<P, R>(method: Method, responseClass: Class<R>, url: String?) : Endpoint<P, R>(method, responseClass, url) {
     operator fun invoke(parameter: P): R {
-        return call(parameter)
+        return fetch(parameter)
+    }
+
+    operator fun invoke(parameter: P, callback: (R) -> Unit) {
+        fetch(parameter, callback)
     }
 }
 
 class Producer<R>(method: Method, responseClass: Class<R>, url: String?) : Endpoint<Unit, R>(method, responseClass, url) {
     operator fun invoke(): R {
-        return call(Unit)
+        return fetch(Unit)
+    }
+
+    operator fun invoke(callback: (R) -> Unit) {
+        return fetch(Unit, callback)
     }
 }
 
