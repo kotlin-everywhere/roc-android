@@ -22,5 +22,5 @@ repositories {
 }
 
 dependencies {
-    compile 'com.github.kotlin-everywhere:rpc-servlet:2e695ab9bd'
+    compile 'com.github.kotlin-everywhere:rpc-servlet:cbd80592a3'
 }
